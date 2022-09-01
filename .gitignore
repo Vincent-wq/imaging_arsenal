@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+legacy/cerebellum_confounder/nilearn_cache/joblib/module_versions.json
+legacy/cerebellum_confounder/nilearn_cache/joblib/nilearn/image/resampling/resample_img/996d7d2f8f068dce3ff9cf00c3e64eed/output.pkl
+legacy/cerebellum_confounder/nilearn_cache/joblib/nilearn/image/resampling/resample_img/a7b2a59c41c9eb153ff27059bd6b8b81/metadata.json

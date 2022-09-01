@@ -1,1 +1,11 @@
 conda install openpyxl
+# <Time> installed openpyxl
+
+pip install psmpy
+# 2022.7.24 installed: psmpy-0.3.2 sklearn-0.0
+
+conda install -c conda-forge causalml
+# 2022.7.26 installed: causalml-0.12.3
+
+pip install CausalInference
+# 2022.7.28 installed: CausalInference-0.1.3
