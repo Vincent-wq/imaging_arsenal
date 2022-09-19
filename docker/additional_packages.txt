@@ -9,3 +9,6 @@ conda install -c conda-forge causalml
 
 pip install CausalInference
 # 2022.7.28 installed: CausalInference-0.1.3
+
+pip install squarify
+# 2022.9.15 visualization tool for treemap.
