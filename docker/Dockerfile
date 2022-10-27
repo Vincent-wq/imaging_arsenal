@@ -54,10 +54,13 @@ ENV DEBIAN_FRONTEND="noninteractive" \
     LANG="en_US.UTF-8" \
     LC_ALL="en_US.UTF-8"
 
-# Installing freesurfer
-COPY helper/freesurfer7.2-exclude.txt /usr/local/etc/freesurfer7.2-exclude.txt
+# Installing freesurfer, install all the packages 
+#COPY helper/freesurfer7.2-exclude.txt /usr/local/etc/freesurfer7.2-exclude.txt
+
 RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.2.0/freesurfer-linux-ubuntu18_amd64-7.2.0.tar.gz \
-￼    | tar zxv --no-same-owner -C /opt --exclude-from=/usr/local/etc/freesurfer7.2-exclude.txt
+￼    | tar zxv --no-same-owner -C /opt 
+
+#--exclude-from=/usr/local/etc/freesurfer7.2-exclude.txt
 
 # Simulate SetUpFreeSurfer.sh
 ENV FSL_DIR="/opt/fsl-6.0.5.1" \
