@@ -32,6 +32,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 ARG vincent_arsenal_v=0.1.0
 
+# adding linux sources
+#RUN printf "deb http://archive.debian.org/debian/ jessie main\ndeb-src http://archive.debian.org/debian/ jessie main\ndeb http://security.debian.org jessie/updates main\ndeb-src http://security.debian.org jessie/updates main" > /etc/apt/sources.list
+
 # Prepare environment
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -57,8 +60,7 @@ ENV DEBIAN_FRONTEND="noninteractive" \
 # Installing freesurfer, install all the packages 
 #COPY helper/freesurfer7.2-exclude.txt /usr/local/etc/freesurfer7.2-exclude.txt
 
-RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.2.0/freesurfer-linux-ubuntu18_amd64-7.2.0.tar.gz \
-￼    | tar zxv --no-same-owner -C /opt 
+RUN curl -sSL https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/7.2.0/freesurfer-linux-ubuntu18_amd64-7.2.0.tar.gz | tar zxv --no-same-owner -C /opt 
 
 #--exclude-from=/usr/local/etc/freesurfer7.2-exclude.txt
 
@@ -161,7 +163,7 @@ ENV FSLDIR="/opt/fsl-6.0.5.1" \
     FSLGECUDAQ="cuda.q" \
     LD_LIBRARY_PATH="/opt/fsl-6.0.5.1/lib:$LD_LIBRARY_PATH"
 
-# Convert3D (neurodocker build)
+# Convert3D (neurodocker build), VPN download (Toronto, out of China) faster.
 RUN echo "Downloading Convert3D ..." \
     && mkdir -p /opt/convert3d-1.0.0 \
     && curl -fsSL --retry 5 https://sourceforge.net/projects/c3d/files/c3d/1.0.0/c3d-1.0.0-Linux-x86_64.tar.gz/download \
@@ -172,7 +174,7 @@ RUN echo "Downloading Convert3D ..." \
 ENV C3DPATH="/opt/convert3d-1.0.0" \
     PATH="/opt/convert3d-1.0.0/bin:$PATH"
 
-# AFNI latest (neurodocker build)
+# AFNI latest (neurodocker build), China server.
 RUN apt-get update -qq \
     && apt-get install -y -q --no-install-recommends \
            apt-utils \
@@ -186,7 +188,7 @@ RUN apt-get update -qq \
            libxm4 \
            netpbm \
            tcsh \
-           xfonts-base \
+#           xfonts-base \    # removed due to: no Package 'xfonts-base' has no installation candidate
            xvfb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
@@ -228,24 +230,24 @@ ENV PATH="/opt/afni-latest:$PATH" \
     AFNI_IMSAVE_WARNINGS="NO" \
     AFNI_PLUGINPATH="/opt/afni-latest"
 
-# Installing ANTs 2.3.3 (NeuroDocker build)
+# Installing ANTs 2.3.3 (NeuroDocker build) # need VPN outside of China for dropbox access
 # Note: the URL says 2.3.4 but it is actually 2.3.3
 ENV ANTSPATH="/opt/ants" \
     PATH="/opt/ants:$PATH"
 WORKDIR $ANTSPATH
-RUN curl -sSL "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" \
+RUN curl -sSL --retry 5 "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" \
     | tar -xzC $ANTSPATH --strip-components 1
 
 # Installing and setting up ICA_AROMA
 WORKDIR /opt/ICA-AROMA
-RUN curl -sSL "https://github.com/oesteban/ICA-AROMA/archive/v0.4.5.tar.gz" \
+RUN curl -sSL --retry 5  "https://github.com/oesteban/ICA-AROMA/archive/v0.4.5.tar.gz" \
   | tar -xzC /opt/ICA-AROMA --strip-components 1 && \
   chmod +x /opt/ICA-AROMA/ICA_AROMA.py
 ENV PATH="/opt/ICA-AROMA:$PATH" \
     AROMA_VERSION="0.4.5"
 
 WORKDIR /opt
-RUN curl -sSLO https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip && \
+RUN curl -sSLO  --retry 5 https://www.humanconnectome.org/storage/app/media/workbench/workbench-linux64-v1.5.0.zip && \
     unzip workbench-linux64-v1.5.0.zip && \
     rm workbench-linux64-v1.5.0.zip && \
     rm -rf /opt/workbench/libs_linux64_software_opengl /opt/workbench/plugins_linux64 && \
@@ -284,7 +286,7 @@ ENV HOME="/home/vincent" \
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> $HOME/.bashrc && \
     echo "conda activate base" >> $HOME/.bashrc
 
-# Precaching atlases
+# Precaching atlases, #China server no VPN
 COPY helper/fetch_templates.py fetch_templates.py
 
 RUN /opt/conda/bin/python fetch_templates.py && \
@@ -316,16 +318,17 @@ WORKDIR /tmp
 EXPOSE 8888
 
 # code server
-RUN curl -o /tmp/code-server.tar.gz -SL https://github.com/coder/code-server/releases/download/v4.5.0/code-server-4.5.0-linux-amd64.tar.gz
+RUN curl --retry 5 -o /tmp/code-server.tar.gz -SL https://github.com/coder/code-server/releases/download/v4.9.1/code-server-4.9.1-linux-amd64.tar.gz
 
 USER root
 RUN mkdir -p /src/codeserver &&\
     tar -xvf /tmp/code-server.tar.gz -C /src/codeserver --strip-components=1
-RUN /src/codeserver/code-server --install-extension eamodio.gitlens && \
-    /src/codeserver/code-server --install-extension tht13.python && \
-    /src/codeserver/code-server --install-extension vscode-icons-team.vscode-icons && \
-    /src/codeserver/code-server --install-extension esbenp.prettier-vscode && \
-    /src/codeserver/code-server --install-extension jithurjacob.nbpreviewer
+	
+RUN /src/codeserver/bin/code-server --install-extension eamodio.gitlens && \
+    /src/codeserver/bin/code-server --install-extension tht13.python && \
+    /src/codeserver/bin/code-server --install-extension vscode-icons-team.vscode-icons && \
+    /src/codeserver/bin/code-server --install-extension esbenp.prettier-vscode && \
+    /src/codeserver/bin/code-server --install-extension jithurjacob.nbpreviewer
 	
 #setup jupyterlab
 RUN mkdir -p ~/.jupyter && echo c.NotebookApp.ip = \"0.0.0.0\" > ~/.jupyter/jupyter_notebook_config.py
@@ -334,4 +337,4 @@ CMD jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root
 
 # usage example:
 # start vscode: /src/codeserver/code-server --auth none ${HOME}/project
-# start jupyter-lab: jupyter-lab --notebook-dir=${HOME}/project --no-browser --ip=0.0.0.0 --allow-root	  
+# start jupyter-lab: jupyter-lab --notebook-dir=${HOME}/project --no-browser --ip=0.0.0.0 --allow-root
