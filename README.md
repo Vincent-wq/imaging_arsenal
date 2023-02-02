@@ -67,9 +67,15 @@ Additional packages include:
 
 Conda:
 
-
 Pip:
 
+Adding homepage support [@https://github.com/Vincent-wq/qingwang_vincent.github.io] [In construction]:
+
+including: 
+
+'''apt-get install ruby-full build-essential zlib1g-dev 
+[https://jekyllrb.com/docs/installation/ubuntu/]
+'''
 ## Build
 
 ```
