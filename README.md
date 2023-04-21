@@ -65,17 +65,25 @@ zstd=1.5
 
 Additional packages include:
 
-Conda:
+### Conda:
 
-Pip:
+#### adding excel data support.
+conda install openpyxl=3.0.10  
 
-Adding homepage support [@https://github.com/Vincent-wq/qingwang_vincent.github.io] [In construction]:
+### Pip:
+
+#### Adding homepage support [@https://github.com/Vincent-wq/qingwang_vincent.github.io] [In construction]:
 
 including: 
 
 '''apt-get install ruby-full build-essential zlib1g-dev 
 [https://jekyllrb.com/docs/installation/ubuntu/]
 '''
+
+#### Adding bibliometric support [https://github.com/pybliometrics-dev/pybliometrics]:
+
+pip install pybliometrics
+
 ## Build
 
 ```
