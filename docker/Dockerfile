@@ -235,12 +235,12 @@ ENV PATH="/opt/afni-latest:$PATH" \
 ENV ANTSPATH="/opt/ants" \
     PATH="/opt/ants:$PATH"
 WORKDIR $ANTSPATH
-RUN curl -sSL --retry 5 "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" \
+RUN curl -sSL --retry 6 "https://dl.dropbox.com/s/gwf51ykkk5bifyj/ants-Linux-centos6_x86_64-v2.3.4.tar.gz" \
     | tar -xzC $ANTSPATH --strip-components 1
 
 # Installing and setting up ICA_AROMA
 WORKDIR /opt/ICA-AROMA
-RUN curl -sSL --retry 5  "https://github.com/oesteban/ICA-AROMA/archive/v0.4.5.tar.gz" \
+RUN curl -sSL --retry 6  "https://github.com/oesteban/ICA-AROMA/archive/v0.4.5.tar.gz" \
   | tar -xzC /opt/ICA-AROMA --strip-components 1 && \
   chmod +x /opt/ICA-AROMA/ICA_AROMA.py
 ENV PATH="/opt/ICA-AROMA:$PATH" \
