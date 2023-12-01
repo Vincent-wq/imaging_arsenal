@@ -86,6 +86,11 @@ pip install pybliometrics
 
 pip install mlens
 
+#### Adding imaging tools
+pip install [surfplot](https://pypi.org/project/surfplot/)
+
+Github install [brainmaps](https://github.com/netneurolab/neuromaps)
+
 ## Build
 
 ```
