@@ -8,17 +8,17 @@ This docker env is adapted from the fMRIPrep docker [fMRIPrep-docker](https://gi
 ```
 scikit-image=0.19
 scikit-learn=1.1
-scipy=1.8
-seaborn=0.11
+scipy=1.13.0   (updated from 1.8.0)
+seaborn=0.13.2   (updated from 0.11)
 
 datalad=0.16
 dipy=1.5
 graphviz=3.0
 colorclass=2.2
-matplotlib=3.5
+matplotlib=3.9.2 (updated from 3.5)
 
 nibabel=3.2
-nilearn=0.9
+nilearn=0.10.4
 nipype=1.8
 nitime=0.9
 
@@ -89,7 +89,56 @@ pip install mlens
 #### Adding imaging tools
 pip install [surfplot](https://pypi.org/project/surfplot/)
 
-Github install [brainmaps](https://github.com/netneurolab/neuromaps)
+pip install neuromaps==0.0.5
+
+or  Github install [brainmaps](https://github.com/netneurolab/neuromaps)
+
+pip install dowhy
+
+(lib for causal inference)
+
+pip install pingouin
+
+(lib for general and fast statitical tests)
+
+pip install factor-analyzer
+
+(lib for EFA/CFA etc.)
+
+#### Adding time series support
+
+pip install nolds
+
+(lib for non-linear dynamics modeling)
+
+pip install antropy
+
+(lib for entropy based measures)
+
+pip install hurst
+
+(lib for Hurst Exponent)
+
+pip install hmmlearn
+
+(lib for Hidden Markov Models (HMM))
+
+pip install PyEMD
+
+(lib for computing Earth Mover's Distance)
+
+pip install EMD-signal
+
+(lib for Empirical Mode Decomposition (EMD))
+
+pip install pyRQA
+
+(lib for Recurrence Quantification Analysis (RQA))
+
+## adding visualization libs
+
+pip install 'pyvista[all,trame]' jupyterlab
+pip install "trame_jupyter_extension<2"   (for jupyter-lab 3.x)
 
 ## Build
 
@@ -108,8 +157,22 @@ for Windows:
 docker run -it -p 127.0.0.1:8888:8888 -v C:\Users\Vincent\Desktop\scratch:/scratch vincent_env:latest jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root
 ```
 
+with X11 support 
+
+```
+docker run -it --env DISPLAY=:99 -p 127.0.0.1:8888:8888 -v C:\Users\Vincent\Desktop\scratch:/scratch vincent_env:241216 bash -c "Xvfb :99 -screen 0 1920x1080x24 & jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root"
+```
+
 For Linux:
 
 ```
 sudo docker run -it -p 127.0.0.1:8888:8888 -v $HOME/scratch:/scratch vincent_env:latest jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root
 ```
+
+## Container backup
+
+docker commit <container_id> <image_name>:<tag>
+
+docker save -o <backup_image.tar> <image_name>:<tag>
+
+docker load -i <backup_image.tar>
