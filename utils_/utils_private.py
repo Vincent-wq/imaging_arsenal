@@ -82,6 +82,14 @@ def read_pickle(file_):
     return res_obj
 
 #### data science
+def report_nan_array(arr_):
+    # report index of nan elements in np.array
+    nan_indices = np.where(np.isnan(arr_))
+    # Combine row and column indices
+    nan_coordinates = list(zip(nan_indices[0], nan_indices[1]))
+    print("Coordinates of NaN values:", nan_coordinates)
+    return nan_coordinates
+
 def describe_array(arr):
     import numpy as np
     import scipy.stats as stats
@@ -391,23 +399,56 @@ def plot_all_ICs(res_dict, curr_method='canICA', curr_ses=0, order_list=[]):
     plt.show()
     return ic_list, ic_mask_list
 
+def precision2pcorr(pre_mat, fill_diag=1):
+    pcorr_mat = - pre_mat / np.sqrt(np.outer(np.diag(pre_mat), np.diag(pre_mat)))
+    #print(pcorr_mat)
+    if fill_diag!="":
+        np.fill_diagonal(pcorr_mat, float(fill_diag))
+    return pcorr_mat
+
+## compute FC
+def get_FC(subject_time_series, N_JOBS = 32):
+    from nilearn.connectome import GroupSparseCovarianceCV
+    from sklearn.covariance import GraphicalLassoCV
+    from nilearn.connectome import ConnectivityMeasure
+    #
+    correlation_measure = ConnectivityMeasure(kind="correlation")
+    corr = correlation_measure.fit_transform(subject_time_series)
+    #
+    gsc = GroupSparseCovarianceCV(verbose=2, n_jobs=N_JOBS)
+    gsc.fit(subject_time_series)
+    #
+    gl = GraphicalLassoCV(verbose=2, n_jobs=N_JOBS)
+    gl.fit(np.concatenate(subject_time_series))
+    return corr, gsc, gl
+
 ## FC comparison
 def comp_fc(group1_fcs, group2_fc2, lables_, P_TH):
     from scipy.stats import ttest_ind
     from statsmodels.stats.multitest import multipletests
     t_values, p_values = ttest_ind(group1_fcs, group2_fc2, axis=2)
+    ## ignore nan values
+    flat_p = p_values.flatten()
+    valid_indices = ~np.isnan(flat_p)
+    valid_p_values = flat_p[valid_indices]
+
     # Correct p-values for multiple comparisons using FDR
-    _, corrected_p_values, _, _ = multipletests(p_values.ravel(), method="fdr_bh")
-    corrected_p_values = corrected_p_values.reshape(p_values.shape)
+    _, corrected_p_values, _, _ = multipletests(valid_p_values, method="fdr_bh")
+
+    corrected_p_matrix = np.full(flat_p.shape, np.nan) 
+    corrected_p_matrix[valid_indices] = corrected_p_values
+
+    corrected_p_matrix = corrected_p_matrix.reshape(p_values.shape)
+    #print(corrected_p_matrix)
     #
     significant_uncorrected = p_values < P_TH
-    significant_corrected = corrected_p_values < P_TH
+    significant_corrected = corrected_p_matrix < P_TH
     # 
     n_regions = group1_fcs.shape[0]
     edge_indices = [(i, j) for i in range(n_regions) for j in range(i + 1, n_regions)]  # Upper triangle indices
     results = []
     for i, j in edge_indices:
-        if corrected_p_values[i, j] <= P_TH or p_values[i, j] <= P_TH: # 
+        if corrected_p_matrix[i, j] <= P_TH or p_values[i, j] <= P_TH: # 
             results.append({
                 "Region 1 label": i,
                 "Region 2 label": j,
@@ -415,7 +456,7 @@ def comp_fc(group1_fcs, group2_fc2, lables_, P_TH):
                 "Region 2": lables_[j],
                 "T-Value": t_values[i, j],
                 "P-Value (Uncorrected)": p_values[i, j],
-                "P-Value (Corrected)": corrected_p_values[i, j],
+                "P-Value (Corrected)": corrected_p_matrix[i, j],
                 "Significant (Uncorrected)": significant_uncorrected[i, j],
                 "Significant (Corrected)": significant_corrected[i, j]
         })
