@@ -82,6 +82,58 @@ def read_pickle(file_):
     return res_obj
 
 #### data science
+## inspect data
+def report_na_df(df_, report_flag):
+    # Find the locations of NaN or None values and return missing data tuple list
+    nan_locations = df_.isna()
+    # Extract the row and column names/indices of NaN values
+    missing_data = [(row, col) for row, col in zip(*np.where(nan_locations))]
+    # Report the row and column names/indices
+    if report_flag:
+        print("Missing value found:")
+        #for row_index in nan_locations.index:
+        #    missing_columns = nan_locations.columns[nan_locations.loc[row_index]]
+        #    if not missing_columns.empty:
+        #        print(f"Row {row_index} (index {df_.index[row_index]}): Missing columns: {list(missing_columns)}")
+        for row, col in missing_data:
+            print(f"Row: {row} (index {df_.index[row]}), Column: {col} (name '{df_.columns[col]}')")
+    return missing_data
+
+def report_NAs(df_, tar_list=[], by_="col", plot_=False):
+    res_dict={}
+    if len(tar_list)==0:
+        tar_list = list(df_.columns)
+    if by_ =="col":
+        for x_ in tar_list:
+            na_list = df_[x_].isnull()
+            na_num = na_list.sum()
+            if na_num != 0:
+                res_dict[x_]=na_num
+                print(x_,":", na_num)
+                for i_ in range(len(na_list)):
+                    if na_list[i_]:
+                        print(df_.index[i_])
+    elif by_=="row":
+        for x_ in list(df_.index):
+            na_list = df_.loc[x_,:].isnull()
+            na_num = na_list.sum()
+            if na_num != 0:
+                res_dict[x_]=na_num
+                print(x_,":", na_num)
+                for i_ in range(len(na_list)):
+                    if na_list.iloc[i_]:
+                        print(df_.columns[i_])
+    else:
+        print("report mode err...")
+    if plot_:
+        import matplotlib.pyplot as plt
+        res_dict_sorted = dict(sorted(res_dict.items(), key=lambda item: item[1], reverse=True))
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.bar(list(res_dict_sorted.keys()), list(res_dict_sorted.values()), label=list(res_dict_sorted.keys()))
+        plt.xticks(rotation = 90)
+        plt.xticks(fontsize = 8)
+    return res_dict
+
 def report_nan_array(arr_):
     # report index of nan elements in np.array
     nan_indices = np.where(np.isnan(arr_))
@@ -464,6 +516,84 @@ def comp_fc(group1_fcs, group2_fc2, lables_, P_TH):
     results_df = pd.DataFrame(results)
     return results_df
 
+## comparing FC of 3 groups
+def report_3g_fc(fc_dict_, atlas_, measure_list, P_TH_=0.05, P_TH_show_=0.05):
+    #from utils_.utils_private import comp_fc, precision2pcorr
+    from nilearn import datasets, image
+    print('Using ', atlas_,'atlas ...')
+    res_dict = {}
+    if atlas_ == 'aal':
+        atlas = datasets.fetch_atlas_aal(version='SPM12')
+        atlas_labels = atlas.labels
+        print(atlas_, 'atlas ready with N_roi = ', len(atlas_labels))
+    elif atlas_ == 'msdl':
+        atlas = datasets.fetch_atlas_msdl()
+        atlas_labels = atlas.labels
+        print(atlas_, 'atlas ready with N_roi = ', len(atlas_labels))
+    else:
+        print('Atlas error:', atlas_, 'not recognized...')
+    # Correlation measure
+    if 'corr' in measure_list:
+        mdd_corr_fc_res      = comp_fc(np.transpose(fc_dict_['MDD'][atlas_]['corr'], axes=(1, 2, 0)) , np.transpose(fc_dict_['control'][atlas_]['corr'], axes=(1, 2, 0)), atlas_labels, P_TH_)
+        ptsd_corr_fc_res     = comp_fc(np.transpose(fc_dict_['PTSD-MDD'][atlas_]['corr'], axes=(1, 2, 0)) , np.transpose(fc_dict_['control'][atlas_]['corr'], axes=(1, 2, 0)), atlas_labels, P_TH_)
+        ptsd_mdd_corr_fc_res = comp_fc(np.transpose(fc_dict_['PTSD-MDD'][atlas_]['corr'], axes=(1, 2, 0)) , np.transpose(fc_dict_['MDD'][atlas_]['corr'], axes=(1, 2, 0)), atlas_labels, P_TH_)
+        ## Print results
+        print('FC (correlation) comparison results for MDD, PTSD-MDD and control with P_th =',P_TH_,'and, P_th_show =', P_TH_show_)
+        print('MDD v.s. control:')
+        display(mdd_corr_fc_res[mdd_corr_fc_res["P-Value (Corrected)"]<P_TH_show_]) 
+        print('PTSD-MDD v.s. control:')
+        display(ptsd_corr_fc_res[ptsd_corr_fc_res["P-Value (Corrected)"]<P_TH_show_]) 
+        print('PTSD-MDD v.s. MDD:')
+        display(ptsd_mdd_corr_fc_res[ptsd_mdd_corr_fc_res["P-Value (Corrected)"]<P_TH_show_])
+        res_dict['corr'] = {'MDD-control': mdd_corr_fc_res, 'PTSD-MDD-control':ptsd_corr_fc_res, 'PTSD-MDD-MDD': ptsd_mdd_corr_fc_res}
+    # Covariance measure
+    if 'gsc' in measure_list:
+        mdd_fc_res      = comp_fc(fc_dict_['MDD'][atlas_]['gsc'].covariances_ ,      fc_dict_['control'][atlas_]['gsc'].covariances_, atlas_labels, P_TH_)
+        ptsd_fc_res     = comp_fc(fc_dict_['PTSD-MDD'][atlas_]['gsc'].covariances_ , fc_dict_['control'][atlas_]['gsc'].covariances_, atlas_labels, P_TH_)
+        mdd_ptsd_fc_res = comp_fc(fc_dict_['PTSD-MDD'][atlas_]['gsc'].covariances_ , fc_dict_['MDD'][atlas_]['gsc'].covariances_, atlas_labels, P_TH_)
+        ## Print results
+        print('FC (sparse group covariance) comparison results for MDD, PTSD-MDD and control with P_th =',P_TH_,'and, P_th_show =', P_TH_show_)
+        print('MDD v.s. control:')
+        display(mdd_fc_res[mdd_fc_res["P-Value (Corrected)"]<P_TH_show_])
+        print('PTSD-MDD v.s. control:') 
+        display(ptsd_fc_res[ptsd_fc_res["P-Value (Corrected)"]<P_TH_show_])
+        print('PTSD-MDD v.s. MDD:') 
+        display(mdd_ptsd_fc_res[mdd_ptsd_fc_res["P-Value (Corrected)"]<P_TH_show_]) 
+        res_dict['gsc'] = {'MDD-control': mdd_fc_res, 'PTSD-MDD-control':ptsd_fc_res, 'PTSD-MDD-MDD': mdd_ptsd_fc_res}
+    # Precision measure
+    if 'precision' in measure_list:
+        mdd_fc_res      = comp_fc(fc_dict_['MDD'][atlas_]['gsc'].precisions_ ,      fc_dict_['control'][atlas_]['gsc'].precisions_, atlas_labels, P_TH_)
+        ptsd_fc_res     = comp_fc(fc_dict_['PTSD-MDD'][atlas_]['gsc'].precisions_ , fc_dict_['control'][atlas_]['gsc'].precisions_, atlas_labels, P_TH_)
+        mdd_ptsd_fc_res = comp_fc(fc_dict_['PTSD-MDD'][atlas_]['gsc'].precisions_ , fc_dict_['MDD'][atlas_]['gsc'].precisions_,     atlas_labels, P_TH_)
+        ## Print results
+        print('FC (sparse group precision) comparison results for MDD, PTSD-MDD and control with P_th =',P_TH_,'and, P_th_show =', P_TH_show_)
+        print('MDD v.s. control:')
+        display(mdd_fc_res[mdd_fc_res["P-Value (Corrected)"]<P_TH_show_])
+        print('PTSD-MDD v.s. control:') 
+        display(ptsd_fc_res[ptsd_fc_res["P-Value (Corrected)"]<P_TH_show_])
+        print('PTSD-MDD v.s. MDD:') 
+        display(mdd_ptsd_fc_res[mdd_ptsd_fc_res["P-Value (Corrected)"]<P_TH_show_]) 
+        res_dict['precision'] = {'MDD-control': mdd_fc_res, 'PTSD-MDD-control':ptsd_fc_res, 'PTSD-MDD-MDD': mdd_ptsd_fc_res}
+    # Partial correlation measure
+    if 'pcorr' in measure_list:
+        ## Compare sparse pcorr
+        pcorr_mdd      = np.moveaxis(np.array([precision2pcorr(fc_dict_['MDD'][atlas_]['gsc'].precisions_[:,:,i_subj], 0) for i_subj in range(fc_dict_['MDD'][atlas_]['gsc'].precisions_.shape[-1])]), 0, -1)
+        pcorr_ptsd_mdd = np.moveaxis(np.array([precision2pcorr(fc_dict_['PTSD-MDD'][atlas_]['gsc'].precisions_[:,:,i_subj], 0) for i_subj in range(fc_dict_['PTSD-MDD'][atlas_]['gsc'].precisions_.shape[-1])]), 0, -1)
+        pcorr_control  = np.moveaxis(np.array([precision2pcorr(fc_dict_['control'][atlas_]['gsc'].precisions_[:,:,i_subj], 0) for i_subj in range(fc_dict_['control'][atlas_]['gsc'].precisions_.shape[-1])]), 0, -1)
+        mdd_fc_res      = comp_fc(pcorr_mdd, pcorr_control, atlas_labels, P_TH_)
+        ptsd_fc_res     = comp_fc(pcorr_ptsd_mdd , pcorr_control, atlas_labels, P_TH_)
+        mdd_ptsd_fc_res = comp_fc(pcorr_ptsd_mdd , pcorr_mdd, atlas_labels, P_TH_)
+        ## Print results
+        print('FC (sparse paritial correlation) comparison results for MDD, PTSD-MDD and control with P_th =',P_TH_,'and, P_th_show =', P_TH_show_)
+        print('MDD v.s. control:')
+        display(mdd_fc_res[mdd_fc_res["P-Value (Corrected)"]<P_TH_show_])
+        print('PTSD-MDD v.s. control:') 
+        display(ptsd_fc_res[ptsd_fc_res["P-Value (Corrected)"]<P_TH_show_])
+        print('PTSD-MDD v.s. MDD:') 
+        display(mdd_ptsd_fc_res[mdd_ptsd_fc_res["P-Value (Corrected)"]<P_TH_show_]) 
+        res_dict['pcorr'] = {'MDD-control': mdd_fc_res, 'PTSD-MDD-control':ptsd_fc_res, 'PTSD-MDD-MDD': mdd_ptsd_fc_res}
+    return res_dict
+
 ####
 def report_stats(df_in, cols_, group_dict, session_dict, th_p):
     ## doing basic statistical tests and output dataframe
@@ -651,42 +781,6 @@ def check_res_norm(smf_res, title_, plot_=True):
         plt.title(title_)
         plt.show()
     return diag.kstest_normal(smf_res.resid, dist='norm', pvalmethod='table')
-
-## check data
-def report_NAs(df_, tar_list=[], by_="col", plot_=False):
-    res_dict={}
-    if len(tar_list)==0:
-        tar_list = list(df_.columns)
-    if by_ =="col":
-        for x_ in tar_list:
-            na_list = df_[x_].isnull()
-            na_num = na_list.sum()
-            if na_num != 0:
-                res_dict[x_]=na_num
-                print(x_,":", na_num)
-                for i_ in range(len(na_list)):
-                    if na_list[i_]:
-                        print(df_.index[i_])
-    elif by_=="row":
-        for x_ in list(df_.index):
-            na_list = df_.loc[x_,:].isnull()
-            na_num = na_list.sum()
-            if na_num != 0:
-                res_dict[x_]=na_num
-                print(x_,":", na_num)
-                for i_ in range(len(na_list)):
-                    if na_list.iloc[i_]:
-                        print(df_.columns[i_])
-    else:
-        print("report mode err...")
-    if plot_:
-        import matplotlib.pyplot as plt
-        res_dict_sorted = dict(sorted(res_dict.items(), key=lambda item: item[1], reverse=True))
-        fig, ax = plt.subplots(figsize=(8, 4))
-        ax.bar(list(res_dict_sorted.keys()), list(res_dict_sorted.values()), label=list(res_dict_sorted.keys()))
-        plt.xticks(rotation = 90)
-        plt.xticks(fontsize = 8)
-    return res_dict
 
 def ols_fit(data_, model_str_list, group_dict, report_model=True): 
     import statsmodels.formula.api as smf
