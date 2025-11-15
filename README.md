@@ -94,8 +94,14 @@ pip install neuromaps==0.0.5
 or  Github install [brainmaps](https://github.com/netneurolab/neuromaps)
 
 pip install dowhy
+pip install pydot
+pip install econml
 
 (lib for causal inference)
+
+pip install py-irt
+
+(lib for item respose theory)
 
 pip install pingouin
 
