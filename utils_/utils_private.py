@@ -602,7 +602,8 @@ def fs_2_df(subj_df, fs_folder, session_id, col_sel_list, save_path):
     lh_DKT_vol_file = fs_folder / ('lh'+files_2_read['DKT']['volume']); rh_DKT_vol_file = fs_folder / ('rh'+files_2_read['DKT']['volume'])
 
     # drop_list
-    aseg_drop = ["EstimatedTotalIntraCranialVol"]; 
+    aseg_drop_list = ["EstimatedTotalIntraCranialVol"]; 
+    vol_drop_list = ['eTIV', 'BrainSegVolNotVent'];
     wm_drop   = ["MaskVol", "EstimatedTotalIntraCranialVol", "CerebralWhiteMatterVol", "rhCerebralWhiteMatterVol", "lhCerebralWhiteMatterVol"]
     
     subj_df.loc[:, 'session'] = len(subj_df)*[session_id]
@@ -612,7 +613,7 @@ def fs_2_df(subj_df, fs_folder, session_id, col_sel_list, save_path):
     cols_aseg_dict = {'3rd-Ventricle':'Ventricle_3rd', '4th-Ventricle':'Ventricle_4th', '5th-Ventricle':'Ventricle_5th'}
     subcortical_tab.rename(columns=cols_aseg_dict, inplace=True)
     subcortical_tab['eTIV']=subcortical_tab['EstimatedTotalIntraCranialVol']
-    subcortical_tab.drop(aseg_drop, axis=1, inplace=True)
+    subcortical_tab.drop(aseg_drop_list, axis=1, inplace=True)
 
     # read wm_file
     res = pd.merge(subj_df, subcortical_tab, on='participant_id')
@@ -637,11 +638,19 @@ def fs_2_df(subj_df, fs_folder, session_id, col_sel_list, save_path):
 
     # 
     seg_Des_tab = pd.merge(res1, lh_Des_ct_tab, on='participant_id');          seg_Des_tab = pd.merge(seg_Des_tab, rh_Des_ct_tab, on='participant_id'); 
+    # removing vol_drop_list = ['eTIV', 'BrainSegVolNotVent'] for fs 7.2.0 preproc for vols
+    lh_Des_vol_tab.drop(vol_drop_list, axis=1, inplace=True); rh_Des_vol_tab.drop(vol_drop_list, axis=1, inplace=True);
     seg_Des_tab = pd.merge(seg_Des_tab, lh_Des_vol_tab, on='participant_id');  seg_Des_tab = pd.merge(seg_Des_tab, rh_Des_vol_tab, on='participant_id'); 
+    # removing vol_drop_list = ['eTIV', 'BrainSegVolNotVent'] for fs 7.2.0 preproc for areas
+    lh_Des_area_tab.drop(vol_drop_list, axis=1, inplace=True); rh_Des_area_tab.drop(vol_drop_list, axis=1, inplace=True);
     seg_Des_tab = pd.merge(seg_Des_tab, lh_Des_area_tab, on='participant_id'); seg_Des_tab = pd.merge(seg_Des_tab, rh_Des_area_tab, on='participant_id'); 
 
-    seg_DKT_tab = pd.merge(res1, lh_DKT_ct_tab, on='participant_id');          seg_DKT_tab = pd.merge(seg_DKT_tab, rh_DKT_ct_tab, on='participant_id');  
+    seg_DKT_tab = pd.merge(res1, lh_DKT_ct_tab, on='participant_id');          seg_DKT_tab = pd.merge(seg_DKT_tab, rh_DKT_ct_tab, on='participant_id'); 
+    # removing vol_drop_list = ['eTIV', 'BrainSegVolNotVent'] for fs 7.2.0 preproc for vols
+    lh_DKT_vol_tab.drop(vol_drop_list, axis=1, inplace=True); rh_DKT_vol_tab.drop(vol_drop_list, axis=1, inplace=True);
     seg_DKT_tab = pd.merge(seg_DKT_tab, lh_DKT_vol_tab, on='participant_id');  seg_DKT_tab = pd.merge(seg_DKT_tab, rh_DKT_vol_tab, on='participant_id'); 
+    # removing vol_drop_list = ['eTIV', 'BrainSegVolNotVent'] for fs 7.2.0 preproc for areas
+    lh_DKT_area_tab.drop(vol_drop_list, axis=1, inplace=True); rh_DKT_area_tab.drop(vol_drop_list, axis=1, inplace=True);
     seg_DKT_tab = pd.merge(seg_DKT_tab, lh_DKT_area_tab, on='participant_id'); seg_DKT_tab = pd.merge(seg_DKT_tab, rh_DKT_area_tab, on='participant_id');   
 
     # return data
