@@ -1,0 +1,21 @@
+#!/bin/bash
+DATA_NAME=(${@:1:1})
+SES_ID=(${@:2:1})
+FMRIPREP_VER=(${@:3:1})
+
+echo "collecting " ${DATA_NAME} "session: "${SES_ID} "fMRIPrep_ver" ${FMRIPREP_VER} "results..."
+
+WD_DIR=${HOME}/scratch
+DERIVS_DIR_NAME=${WD_DIR}/${DATA_NAME}/derivatives
+FS_VER="7.2.0"
+FMRIPREP_DIR=${DERIVS_DIR_NAME}/fmriprep_ses-${SES_ID}_${FMRIPREP_VER}
+
+#mv fmriprep_subj_vince-* ${LOG_DIR_NAME}
+
+#2 collect output
+mv FMRIPREP_DIR/freesurfer-${FS_VER} ${DATA_DIR}/derivatives
+
+tar -czvf ${DERIVS_DIR_NAME}/${DATA_NAME}_fmriprep_${FMRIPREP_VER}.tar.gz ${FMRIPREP_DIR}
+tar -czvf ${DERIVS_DIR_NAME}/${DATA_NAME}_freesurfer_${FS_VER}.tar.gz ${FMRIPREP_DIR}/"freesurfer-"${FS_VER}
+
+echo "fMRIPrep for ${DATA_NAME} Finished"

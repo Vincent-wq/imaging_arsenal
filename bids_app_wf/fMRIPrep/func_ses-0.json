@@ -1,0 +1,12 @@
+{
+    "t1w": {
+        "datatype": "anat",
+        "session": "0",
+        "suffix": "T1w"
+    },
+    "bold": {
+        "datatype": "func",
+        "session": "0",
+        "suffix": "bold"
+    }
+}

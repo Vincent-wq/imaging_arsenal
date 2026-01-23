@@ -1,0 +1,40 @@
+#!/bin/bash
+# usage:
+# bash heudiconv_slurm_run1_format.sh ${DATA_NAME} ${hpc_system}
+DATA_NAME=(${@:1:1})
+echo ${DATA_NAME}
+hpc_system=(${@:2:1})
+echo ${hpc_system}
+
+
+WD_DIR="${HOME}/scratch"
+
+if [ ${hpc_system} == 'slurm' ]; then
+# working dir for BIC server sge
+
+if [[ "$DATA_NAME" == *"control"* ]]; then
+    repo_string="${DATA_NAME%_control}"
+    CODE_DIR="${WD_DIR}/repo_${repo_string}/workflow/HeuDiConv"
+else
+    CODE_DIR="${WD_DIR}/repo_${DATA_NAME}/workflow/HeuDiConv"
+fi
+
+else
+# needs updates
+CODE_DIR="${WD_DIR}/repo_${DATA_NAME}/workflow/HeuDiConv"
+fi 
+
+BIDS_DIR=${WD_DIR}/${DATA_NAME}/bids
+INFO_DIR=${WD_DIR}/${DATA_NAME}/conv_info
+
+for subject_id in $(find ${BIDS_DIR}/.heudiconv/ -maxdepth 1 -mindepth 1 | xargs -I {} basename {}); do
+  echo "gathering subject scans data for: "${subject_id}
+  cat ${BIDS_DIR}/.heudiconv/${subject_id}/info/dicominfo_ses-*.tsv >> ${INFO_DIR}/dicominfo_sum_tmp.tsv
+done
+sort -r ${INFO_DIR}/dicominfo_sum_tmp.tsv | uniq > ${INFO_DIR}/${DATA_NAME}_dicomInfo.tsv
+cp ${INFO_DIR}/${DATA_NAME}_dicomInfo.tsv ${CODE_DIR}/${DATA_NAME}_dicomInfo.tsv
+rm ${INFO_DIR}/dicominfo_sum_tmp.tsv
+
+#zip -r res/${INFO_SUM_DIR_NAME}.tar.gz ${INFO_SUM_DIR_NAME}
+#zip -r res/${LOG_DIR_NAME}.tar.gz ${LOG_DIR_NAME}
+echo "Step4: Heudiconv Run1 dicominfo collected"
