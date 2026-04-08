@@ -146,6 +146,17 @@ pip install pyRQA
 pip install 'pyvista[all,trame]' jupyterlab
 pip install "trame_jupyter_extension<2"   (for jupyter-lab 3.x)
 
+## adding algorithms
+pip install group_lasso
+
+pip install mbpls
+
+pip install cca-zoo
+
+## adding data scratching libs
+
+pip install missingno
+
 ## Build
 
 ```
@@ -160,19 +171,19 @@ sudo docker build -t vincent_env -f Dockerfile .
 for Windows:
 
 ```
-docker run -it -p 127.0.0.1:8888:8888 -v C:\Users\Vincent\Desktop\scratch:/scratch vincent_env:latest jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root
+docker run -it -p 127.0.0.1:8888:8888 -v C:\Users\Vincent\Desktop\scratch:/scratch vincent_env:latest jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root --ServerApp.token='' --ServerApp.password='' --ServerApp.disable_check_xsrf=True
 ```
 
 with X11 support 
 
 ```
-docker run -it --env DISPLAY=:99 -p 127.0.0.1:8888:8888 -v C:\Users\Vincent\Desktop\scratch:/scratch vincent_env:241216 bash -c "Xvfb :99 -screen 0 1920x1080x24 & jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root"
+docker run -it -p 127.0.0.1:8888:8888 -v C:\Users\Vincent\Desktop\scratch:/scratch vincent_env:latest bash -c "Xvfb :99 -screen 0 1920x1080x24 & jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root --ServerApp.token='' --ServerApp.password='' --ServerApp.disable_check_xsrf=True
 ```
 
 For Linux:
 
 ```
-sudo docker run -it -p 127.0.0.1:8888:8888 -v $HOME/scratch:/scratch vincent_env:latest jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root
+sudo docker run -it -p 127.0.0.1:8888:8888 -v $HOME/scratch:/scratch vincent_env:latest jupyter-lab --notebook-dir=/scratch --ip=0.0.0.0 --no-browser --allow-root --ServerApp.token='' --ServerApp.password='' --ServerApp.disable_check_xsrf=True
 ```
 
 ## Container backup
